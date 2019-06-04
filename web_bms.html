@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"
+            integrity="sha256-Qw82+bXyGq6MydymqBxNPYTaUXXq7c8v3CwiYwLLNXU="
+            crossorigin="anonymous"></script>
+    <script type="text/javascript">
+
+        // TODO: 초안..
+        // 할게 많지만 우선 할 것은 BPM 계산하기.
+        // 백엔드 구성하기.
+        // 프론트 캔버스로 건반 및 이것저것 구성.
+        // 일단 투헤븐 재생 완료.
+
+        var PLAYER;
+        var GENRE;
+        var TITLE;
+        var ARTIST;
+        var BPM;
+        var PLAYLEVEL;
+        var RANK;
+        var VOLWAV;
+        var TOTAL;
+
+        var WAV = "WAV";
+        /*
+                function readTextFile(file) {
+                    var rawFile = new XMLHttpRequest();
+                    rawFile.open("GET", file, false);
+                    rawFile.onreadystatechange = function () {
+                        if (rawFile.readyState === 4) {
+                            if (rawFile.status === 200 || rawFile.status == 0) {
+                                var allText = rawFile.responseText;
+                                alert(allText);
+                            }
+                        }
+                    }
+                    rawFile.send(null);
+                }*/
+
+        //TODO
+        var playObj = {};
+        //var x = x.substring(1, x.length);
+        console.log(playObj);
+        $(document).ready(function () {
+            /*   $.get('ToHeven/to1.bms', function (data) {
+                   alert(data);
+                   //process text file line by line
+                  // $('#div').html(data.replace('n', ''));
+               });*/
+            /*
+                        $.when($.ajax('ToHeven/to1.bms'))
+                            .done(function (example1Result) {
+                                console.log('example1Result', example1Result)
+                            })
+                            .fail(function () {
+                                console.log('rejected');
+                            });*/
+
+            var jqxhr = $.ajax("ToHeven/to2.bms");
+            jqxhr.done(function (data) {
+                //console.log(data);
+                var lineData = data.split("\n");
+                var wavData = {};
+                var playList = [];
+                //var playObj = {};
+                lineData = lineData.filter(function (word) {
+                    var first = word.charAt(0);
+                    // console.log(first)
+                    if (first == "#") {
+                        return word;
+                    }
+                });
+
+                // 필터 후 가져오기.
+                $.each(lineData, function (ind, val) {
+                    console.log(ind, val);
+                    var firstKey = val.substring(0, 4);
+                    var wav = val.substring(4, val.length);
+                    if (firstKey == "#" + WAV) {
+                        var wavId = wav.split(" ")[0];
+                        var wavSound = wav.split(" ")[1];
+                        wavData[wavId] = wavSound;
+                        $("body").append("<audio id=\"" + wavId + "\" src=\"ToHeven/" + wavSound + "\" controls=\"true\" hidden></audio>");
+                    } else if (/^#[0-9]{0,4}$/.test(firstKey)) {
+                        console.log(firstKey, wav, wav.split(":"))
+                        playList.push(val);
+                        if (playObj[firstKey] == null) {
+                            playObj[firstKey] = [];
+                        }
+                        var obj = {};
+                        var soundStr = wav.split(":")[1];
+                        var soundArr = [];
+                        // 2개씩 끊기
+                        for (var i = 0; i < soundStr.length - 2; i += 2) {
+                            soundArr.push(soundStr.substr(i, 2));
+                        }
+                        obj[wav.split(":")[0]] = soundArr;
+                        playObj[firstKey].push(obj)
+                    }
+                });
+                console.log(wavData);
+            });
+        });
+
+        function playMusic() {
+            var index = 0;
+            $.each(playObj, function (key, obj) {
+                console.log(index, key, obj);
+                (function (ind, line) {
+                    window.setTimeout(function () {
+                        console.log(line);
+
+                        line.forEach(function (soundObj) {
+                            //console.log(soundObj);
+                            $.each(soundObj, function (key, soundArr) {
+                                //console.log(key, soundArr, 3500 / soundArr.length);
+                                var soundIndex = 0;
+                                soundArr.forEach(function (sound) {
+
+                                    (function (sInd, snd) {
+                                        window.setTimeout(function () {
+                                            console.log(snd, sInd, index);
+                                            if(snd != "00") {
+                                                var $sound = $("#" + snd)[0];
+                                                $sound.play();
+                                            }
+
+                                        }, sInd * (3500 / soundArr.length));
+                                    })(soundIndex, sound);
+                                    soundIndex++;
+                                });
+                            });
+                        });
+
+                    }, 3500 * ind);
+                })(index, obj);
+                index++;
+            });
+        }
+    </script>
+</head>
+<body>
+<div id="div">
+
+</div>
+
+</body>
+</html>
